@@ -3,8 +3,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Project } from '@/lib/firebase/projects';
-import { uploadFile } from '@/lib/firebase/storage';
-import { useAuth } from '@/lib/hooks/useAuth';
+
+
 
 interface ImageEditorProps {
   project: Project;
@@ -36,14 +36,14 @@ const FILTERS = [
 ];
 
 export default function ImageEditorMain({ project, onSave }: ImageEditorProps) {
-  const { user } = useAuth();
+  
   const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [imageSrc, setImageSrc] = useState<string>(project.data?.imageSrc || '');
   const [activeFilter, setActiveFilter] = useState(project.data?.filter || 'none');
   const [activePanel, setActivePanel] = useState<'adjust' | 'filters' | 'crop' | null>(null);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  
   const [adj, setAdj] = useState<Adjustments>(project.data?.adjustments || {
     brightness: 100, contrast: 100, saturation: 100, blur: 0, hue: 0, opacity: 100,
   });
@@ -61,13 +61,11 @@ export default function ImageEditorMain({ project, onSave }: ImageEditorProps) {
     ].filter(Boolean).join(' '),
   };
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !user) return;
-    setUploading(true);
-    const url = await uploadFile(file, user.uid);
-    setImageSrc(url);
-    setUploading(false);
+    if (!file) return;
+    const localUrl = URL.createObjectURL(file);
+    setImageSrc(localUrl);
   };
 
   const handleSave = async () => {
@@ -125,7 +123,7 @@ export default function ImageEditorMain({ project, onSave }: ImageEditorProps) {
 
         {/* Canvas / Preview */}
         <div className="flex-1 bg-[#111] flex items-center justify-center overflow-hidden">
-          {uploading ? (
+          ({false ? (
             <div className="text-gray-400">Uploading...</div>
           ) : imageSrc ? (
             <img
