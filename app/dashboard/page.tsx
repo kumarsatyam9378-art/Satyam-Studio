@@ -10,7 +10,7 @@ export default function DashboardPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
-  const [fetching, setFetching] = useState(true);
+  const [fetching, setFetching] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) router.push('/');
@@ -18,10 +18,11 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (user) {
-      getUserProjects(user.uid).then((p) => {
-        setProjects(p);
-        setFetching(false);
-      });
+      setFetching(true);
+      getUserProjects(user.uid)
+        .then((p) => setProjects(p))
+        .catch(() => setProjects([]))
+        .finally(() => setFetching(false));
     }
   }, [user]);
 
@@ -47,19 +48,26 @@ export default function DashboardPage() {
     router.push('/');
   };
 
-  if (loading || fetching) {
+  // Sirf Firebase auth check ke time loading dikhao
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="text-white text-xl">Loading...</div>
+        <div className="text-center">
+          <div className="text-5xl mb-4">🎬</div>
+          <div className="text-white text-xl font-semibold">Satyam Studio</div>
+          <div className="text-gray-400 text-sm mt-2">Loading...</div>
+        </div>
       </div>
     );
   }
+
+  if (!user) return null;
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       {/* Header */}
       <header className="bg-gray-900 border-b border-gray-800 px-6 py-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">🎬 HyperEdit</h1>
+        <h1 className="text-2xl font-bold">🎬 Satyam Studio</h1>
         <div className="flex items-center gap-4">
           <span className="text-gray-400 text-sm">{user?.email}</span>
           <button
@@ -98,7 +106,9 @@ export default function DashboardPage() {
         {/* Projects */}
         <div>
           <h2 className="text-xl font-semibold mb-4">My Projects ({projects.length})</h2>
-          {projects.length === 0 ? (
+          {fetching ? (
+            <div className="text-center py-20 text-gray-500">Loading projects...</div>
+          ) : projects.length === 0 ? (
             <div className="text-center py-20 text-gray-500">
               No projects yet. Create your first one above!
             </div>
